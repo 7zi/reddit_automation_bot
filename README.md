@@ -2,7 +2,8 @@
 
 #Reddit Automation Bot
 
-This is a ruby gem that allows you to automate several aspects of reddit.
+Reddit auto is a ruby gem that allows you to automate several aspects of reddit.
+It doesn't use the reddit api, instead uses watir/selenium to automate.
 
 ###Features
 
