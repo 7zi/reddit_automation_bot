@@ -1,11 +1,11 @@
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=NAT333XURSXGY&source=url)
 
-#Reddit Automation Bot
+# Reddit Automation Bot
 
 Reddit auto is a ruby gem that allows you to automate several aspects of reddit.
 It doesn't use the reddit api, instead uses watir/selenium to automate.
 
-###Features
+### Features
 
 You can automate several things, here are some examples:
 
@@ -15,11 +15,11 @@ You can automate several things, here are some examples:
 * Commenting on posts
 * Scraping
 
-###Installation
+### Installation
 
 `gem install reddit_auto`
 
-###Usage
+### Usage
 
 You just have to start a class instance and assign a browser to it.
 
@@ -36,7 +36,7 @@ You just have to start a class instance and assign a browser to it.
 See some examples in the Examples folder.
 
 
-###Author
+### Author
 
 Ícaro Augusto
 
