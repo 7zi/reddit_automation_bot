@@ -671,8 +671,8 @@ class Reddit
 		return nil if @browser.div(id: 'classy-error').present?
 		result = {}
 		result['name'] = user
-		result['postKarma'] = get_user_post_karma
-		result['commentKarma'] = get_user_comment_karma
+		result['post_karma'] = get_user_post_karma
+		result['comment_karma'] = get_user_comment_karma
 		result['is_friend'] = @username ? is_friend : false
 		result['moderating'] = get_moderating if is_moderator
 		return result
@@ -729,7 +729,7 @@ class Reddit
 		end
 	end
 
-	def isActivityVoted(div, type)
+	def is_activity_voted(div, type)
 		return is_comment_voted(div, type)
 	end
 
