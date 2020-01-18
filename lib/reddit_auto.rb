@@ -289,7 +289,12 @@ class Reddit
 	end
 
 	def reply_post(post, answer)
-		@browser.goto post if post != nil
+    case post.class
+    when Hash
+      @browser.goto PAGE_MAIN_NO_SLASH + post['link']
+    when String
+      @browser.goto post
+    end
 		@browser.div(class: 'commentarea').textarea(name: 'text').set answer
 		@browser.div(class: 'commentarea').button(text: 'save').click
 		return wait_reply
