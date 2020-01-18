@@ -266,8 +266,16 @@ class Reddit
 		return PAGE_MAIN_NO_SLASH + link
 	end
 
-	def open_post(link)
-		@browser.goto form_post_url(link)
+	def open_post(post)
+    case post
+    when Hash
+      @browser.goto form_post_url(post['link'])
+    when String
+      @browser.goto post
+    else
+      return
+    end
+    skip_over_18 if has_over_18
 	end
 
 	def has_reply(answer)
@@ -289,12 +297,7 @@ class Reddit
 	end
 
 	def reply_post(post, answer)
-    case post
-    when Hash
-      @browser.goto PAGE_MAIN_NO_SLASH + post['link']
-    when String
-      @browser.goto post
-    end
+    open_post(post)
 		@browser.div(class: 'commentarea').textarea(name: 'text').set answer
 		@browser.div(class: 'commentarea').button(text: 'save').click
 		return wait_reply
@@ -410,7 +413,7 @@ class Reddit
 	end
 
 	def get_comments(post, expand = false)
-		@browser.goto post
+		open_post(post)
 		expand_all_comments if expand
 		return parse_comments_divs(get_comments_divs)
 	end
@@ -486,14 +489,30 @@ class Reddit
 		return message_move_page(direction)
 	end
 
+  def form_subreddit_url(name, subpage = 'hot')
+    return PAGE_SUBREDDIT + name + '/' + subpage
+  end
+
 	def open_subreddit(subreddit, subpage = 'hot')
 		raise 'Unknown subreddit subpage: ' + subpage if !SUBREDDIT_SUBPAGES.include? subpage
-		@browser.goto PAGE_SUBREDDIT + subreddit + '/' + subpage
+    case subreddit
+    when Hash
+      @browser.goto form_subreddit_url(subreddit['name'], subpage)
+    when String
+      if subreddit.include? '/'
+        @browser.goto subreddit
+      else
+        @browser.goto form_subreddit_url(subreddit, subpage)
+      end
+    else
+      return
+    end
+		skip_over_18 if has_over_18
 	end
 
 	def get_posts(subreddit, subpage = 'hot', max_pages = 1)
 		raise 'Unknown subreddit subpage: ' + subpage if !SUBREDDIT_SUBPAGES.include? subpage
-		@browser.goto PAGE_SUBREDDIT + subreddit + '/' + subpage
+		open_subreddit(subreddit, subpage)
 		result = []
 		count = 0
 		while true
@@ -507,8 +526,17 @@ class Reddit
 		return result
 	end
 
+  def form_subreddit_mod_url(subreddit)
+    case subreddit
+    when Hash
+      return PAGE_SUBREDDIT + subreddit['name'] + '/about/moderators'
+    when String
+      return PAGE_SUBREDDIT + subreddit + '/about/moderators'
+    end
+  end
+
 	def get_moderators(subreddit) #an array of user names, not user structs itself
-		@browser.goto PAGE_SUBREDDIT + subreddit + '/about/moderators'
+		@browser.goto form_subreddit_mod_url(subreddit)
 		spans = @browser.div(class: 'moderator-table').spans(class: 'user')
 		result = []
 		spans.each do |span|
@@ -532,7 +560,7 @@ class Reddit
 	def get_subreddit(subreddit)
 		result = {}
 		result['name'] = subreddit
-		@browser.goto PAGE_SUBREDDIT + subreddit
+		open_subreddit(subreddit)
 		result['subscribers'] = get_subscribers
 		result['users_online'] = get_users_online
 		result['sidebar'] = get_side_bar
