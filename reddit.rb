@@ -157,14 +157,14 @@ class Reddit
 		@browser.goto PAGE_MESSAGES + subpage
 	end
 
-	def get_messages(subpage, allPages = false)
+	def get_messages(subpage, all_pages = false)
 		open_messages_subpage(subpage)
 		result = []
 		while true
 			get_message_divs.each do |div|
 				result.push get_message(div)
 			end
-			return result if !allPages || !message_move_page('next')
+			return result if !all_pages || !message_move_page('next')
 		end
 	end
 
