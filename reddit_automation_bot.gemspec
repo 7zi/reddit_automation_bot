@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.summary = 'A reddit automation gem that uses watir/selenium'
   s.description = 'This gem uses watir and selenium to automate almost all reddit features using a headless browser.'
   s.files = [
-    "lib/reddit_automation_bot.rb"
+    "lib/reddit_auto.rb"
   ]
   s.require_paths = ["lib"]
   s.add_dependency 'watir', '~> 6.16.5'
