@@ -1,4 +1,3 @@
-
 require 'watir'
 
 #Written by Ícaro Augusto
@@ -35,13 +34,13 @@ TRedditUser = Struct.new(
 	:postKarma,
 	:commentKarma,
 	:moderating, #subreddits the user is a moderator of
-	:isFriend
+	:is_friend
 )
 
 TSubreddit = Struct.new(
 	:name,
 	:subscribers,
-	:usersOnline,
+	:users_online,
 	:sidebar,
 	:moderators
 )
@@ -81,17 +80,17 @@ class Reddit
 	attr_accessor :browser
 	attr_accessor :username
 
-	def hasBrowser
+	def has_browser
 		return @browser != nil
 	end
 
-	def isLoggedIn(username)
+	def is_logged_in(username)
 		return @browser.link(text: username).present?
 	end
 
-	def waitLogin(username)
+	def wait_login(username)
 		count = 0.0
-		while !isLoggedIn(username)
+		while !is_logged_in(username)
 			sleep 0.25
 			count += 0.25
 			if count > 10
@@ -107,12 +106,12 @@ class Reddit
 		@browser.text_field(name: 'passwd').set password
 		@browser.checkbox(id: 'rem-login-main').set
 		@browser.button(text: 'login').click
-		waitLogin(username)
+		wait_login(username)
 	end
 
-	def waitLogout
+	def wait_logout
 		count = 0.0
-		while isLoggedIn(@username)
+		while is_logged_in(@username)
 			sleep 0.25
 			count += 0.25
 			if count > 10
@@ -123,22 +122,22 @@ class Reddit
 
 	def logout
 		@browser.link(text: 'logout').click
-		waitLogout
+		wait_logout
 	end
 
-	def hasOver18
+	def has_over_18
 		return @browser.button(name: 'over18').present?
 	end
 
-	def skipOver18
+	def skip_over_18
 		@browser.button(text: 'continue').click
 	end
 
-	def hasOver18New
+	def has_over_18_new
 		@browser.h3(text: 'You must be 18+ to view this community').present?
 	end
 
-	def skipOver18New
+	def skip_over_18_new
 		@browser.link(text: 'Yes').click
 	end
 
@@ -146,87 +145,87 @@ class Reddit
 	#Messages handling
 	#---------------------------------------------------------------------------------
 
-	def getMessageType(div)
+	def get_message_type(div)
 		return div.attribute_value('data-type')
 	end
 
-	def getMessagePost(div)
+	def get_message_post(div)
 		return div.p(class: 'subject').link(class: 'title').href
 	end
 
-	def getMessageAuthor(div)
+	def get_message_author(div)
 		return div.attribute_value('data-author')
 	end
 
-	def getMessageSubreddit(div)
+	def get_message_subreddit(div)
 		return div.attribute_value('data-subreddit')
 	end
 
-	def getMessageContent(div)
+	def get_message_content(div)
 		return div.div(class: 'md').text
 	end
 
-	def getMessagesDivs
-		allDivs = @browser.div(id: 'siteTable').divs
+	def get_message_divs
+		all_divs = @browser.div(id: 'siteTable').divs
 		result = []
-		allDivs.each do |div|
+		all_divs.each do |div|
 			result.push div if div.id.include? 'thing_'
 		end
 		return result
 	end
 
-	def isMessageVoted(div, type) #type is 'up' or 'down'
+	def is_message_voted(div, type) #type is 'up' or 'down'
 		return div.div(class: 'midcol').div(class: type + 'mod').present?
 	end
 
-	def getMessageVote(div)
-		return 'up' if isMessageVoted(div, 'up')
-		return 'down' if isMessageVoted(div, 'down')
+	def get_message_vote(div)
+		return 'up' if is_message_voted(div, 'up')
+		return 'down' if is_message_voted(div, 'down')
 		return nil
 	end
 
-	def voteMessage(div, type) #type is 'up' or 'down'
-		return if isMessageVoted(div, type)
+	def vote_message(div, type) #type is 'up' or 'down'
+		return if is_message_voted(div, type)
 		div.div(class: 'midcol').div(class: type).click
 	end
 
-	def replyMessage(div, answer)
+	def reply_message(div, answer)
 		div.li(text: 'reply').click
 		div.textarea.set answer
 		div.button(text: 'save').click
 	end
 
-	def getMessage(div) #returns a hash with message data
+	def get_message(div) #returns a hash with message data
 		result = {}
-		result['type'] = getMessageType(div)
-		result['author'] = getMessageAuthor(div)
-		result['post'] = getMessagePost(div) if result['type'] == 'comment'
-		result['subreddit'] = result['type'] == 'comment' ? getMessageSubreddit(div) : result['author']
-		result['vote'] = getMessageVote(div) if result['type'] == 'comment'
-		result['content'] = getMessageContent(div)
+		result['type'] = get_message_type(div)
+		result['author'] = get_message_author(div)
+		result['post'] = get_message_post(div) if result['type'] == 'comment'
+		result['subreddit'] = result['type'] == 'comment' ? get_message_subreddit(div) : result['author']
+		result['vote'] = get_message_vote(div) if result['type'] == 'comment'
+		result['content'] = get_message_content(div)
 		return result
 	end
 
-	def messageMovePage(direction) #directions: next for next page, prev for previous page
+	def message_move_page(direction) #directions: next for next page, prev for previous page
 		button = @browser.span(class: direction + '-button')
 		result = button.present?
 		button.click if result
 		return result
 	end
 
-	def openMessagesSubpage(subpage)
+	def open_messages_subpage(subpage)
 		raise 'Unknown message subpage: ' + subpage if !MESSAGE_SUBPAGES.include? subpage
 		@browser.goto PAGE_MESSAGES + subpage
 	end
 
-	def getMessages(subpage, allPages = false)
-		openMessagesSubpage(subpage)
+	def get_messages(subpage, allPages = false)
+		open_messages_subpage(subpage)
 		result = []
 		while true
-			getMessagesDivs.each do |div|
-				result.push getMessage(div)
+			get_message_divs.each do |div|
+				result.push get_message(div)
 			end
-			return result if !allPages || !messageMovePage('next')
+			return result if !allPages || !message_move_page('next')
 		end
 	end
 
@@ -234,38 +233,38 @@ class Reddit
 	#Submit handling
 	#---------------------------------------------------------------------------------
 
-	def hasSubmitError
+	def has_submit_error
 		return @browser.span(text: 'you are doing that too much. try again in 9 minutes.').present?
 	end
 
-	def isSubmitOpen
+	def is_submit_open
 		return @browser.textarea(name: 'title').present? || @browser.textarea(placeholder: 'Title').present?
 	end
 
-	def waitSubmit
+	def wait_submit
 		count = 0.0
-		while isSubmitOpen
+		while is_submit_open
 			sleep 0.25
 			count += 0.25
 			raise 'Post submission failed!' if count >= 10
 		end
 	end
 
-	def submitLink(subreddit, url, title)
+	def submit_link(subreddit, url, title)
 		@browser.goto PAGE_SUBREDDIT + subreddit + '/submit'
-		skipOver18 if hasOver18
+		skip_over_18 if has_over_18
 		@browser.text_field(id: 'url').set url
 		@browser.textarea(name: 'title').set title
 		@browser.button(name: 'submit').click
-		waitSubmit
+		wait_submit
 	end
 
-	def subHasFlair
+	def sub_has_flair
 		return !@browser.div('aria-label': 'Not available for this community').present?
 	end
 
-	def setFlair(flair)
-		return if !subHasFlair
+	def set_flair(flair)
+		return if !sub_has_flair
 		@browser.div('aria-label': 'Add flair').click
 		if flair == nil
 			@browser.div('aria-label': 'flair_picker').div.click
@@ -275,32 +274,32 @@ class Reddit
 		@browser.button(text: 'Apply').click
 	end
 
-	def submitLink2(subreddit, url, title, flair = nil) #uses new reddit
+	def submit_link_new(subreddit, url, title, flair = nil) #uses new reddit
 		@browser.goto 'https://www.reddit.com/r/' + subreddit + '/submit'
-		skipOver18New if hasOver18New
+		skip_over_18_new if has_over_18_new
 		blink = @browser.button(text: 'Link')
 		blink.click if blink.present?
 		@browser.textarea(placeholder: 'Title').set title
 		@browser.textarea(placeholder: 'Url').set url
-		setFlair(flair)
+		set_flair(flair)
 		@browser.buttons(text: 'Post')[1].click
-		waitSubmit
+		wait_submit
 	end
 
-	def submitText(subreddit, title, text)
+	def submit_text(subreddit, title, text)
 		@browser.goto PAGE_SUBREDDIT + subreddit + '/submit?selftext=true'
-		skipOver18 if hasOver18
+		skip_over_18 if has_over_18
 		@browser.textarea(name: 'title').set title
 		@browser.textarea(name: 'text').set text
 		@browser.button(name: 'submit').click
-		waitSubmit
+		wait_submit
 	end
 
 	#---------------------------------------------------------------------------------
 	#Post handling
 	#---------------------------------------------------------------------------------
 
-	def isOriginalPostVoted(type)
+	def is_original_post_voted(type)
 		div = @browser.div(id: 'siteTable').div(class: 'midcol')
 		case type
 		when 'up'
@@ -312,72 +311,72 @@ class Reddit
 		end
 	end
 
-	def getOriginalPostVote
-		return 'up' if isOriginalPostVoted('up')
-		return 'down' if isOriginalPostVoted('down')
+	def get_original_post_vote
+		return 'up' if is_original_post_voted('up')
+		return 'down' if is_original_post_voted('down')
 		return nil
 	end
 
-	def voteOriginalPost(type)
-		return if isOriginalPostVoted(type)
+	def vote_original_post(type)
+		return if is_original_post_voted(type)
 		div = @browser.div(id: 'siteTable').div(class: 'midcol')
 		div.div(class: type).click
 	end
 
-	def formPostUrl(link)
+	def form_post_url(link)
 		return PAGE_MAIN_NO_SLASH + link
 	end
 
-	def openPost(link)
-		@browser.goto formPostUrl(link)
+	def open_post(link)
+		@browser.goto form_post_url(link)
 	end
 
-	def hasReply(answer)
+	def has_reply(answer)
 		form = @browser.form(text: answer)
 		return form.present? && form.parent.parent.attribute_value('data-author') == @username
 	end
 
-	def hasReplyError
+	def has_reply_error
 		return @browser.span(class: 'error', style: '').present?
 	end
 
-	def getReplyError
+	def get_reply_error
 		return @browser.span(class: 'error', style: '').split(" ")[1]
 	end
 
-	def waitReply(time = 2)
+	def wait_reply(time = 2)
 		sleep time
-		return !hasReplyError
+		return !has_reply_error
 	end
 
-	def replyPost(post, answer)
+	def reply_post(post, answer)
 		@browser.goto post if post != nil
 		@browser.div(class: 'commentarea').textarea(name: 'text').set answer
 		@browser.div(class: 'commentarea').button(text: 'save').click
-		return waitReply
+		return wait_reply
 	end
 
-	def getCommentRepliesCount(div)
+	def get_comment_replies_count(div)
 		return div.attribute_value('data-replies').to_i
 	end
 
-	def commentHasReplies(div)
+	def comment_has_replies(div)
 		return div.attribute_value('data-replies') != '0'
 	end
 
-	def getCommentAuthor(div)
+	def get_comment_author(div)
 		return div.attribute_value('data-author')
 	end
 
-	def getCommentLink(div)
+	def get_comment_link(div)
 		return div.attribute_value('data-permalink')
 	end
 
-	def getCommentContent(div)
+	def get_comment_content(div)
 		return div.div(class: 'usertext-body').text
 	end
 
-	def getCommentKarma(div, vote)
+	def get_comment_karma(div, vote)
 		case vote
 		when 'up'
 			ind = 2
@@ -389,7 +388,7 @@ class Reddit
 		return div.p(class: 'tagline').spans(class: 'score')[ind].text.split(' ')[0].to_i
 	end
 
-	def isCommentVoted(div, type) #type is 'up' or 'down'
+	def is_comment_voted(div, type) #type is 'up' or 'down'
 		case type
 		when 'up'
 			buffer = 'likes'
@@ -401,27 +400,27 @@ class Reddit
 		return div.div(class: 'entry').attribute_value('class') == 'entry ' + buffer
 	end
 
-	def getCommentVote(div)
-		return 'up' if isCommentVoted(div, 'up')
-		return 'down' if isCommentVoted(div, 'down')
+	def get_comment_vote(div)
+		return 'up' if is_comment_voted(div, 'up')
+		return 'down' if is_comment_voted(div, 'down')
 		return nil
 	end
 
-	def commentHasKarma(div)
+	def comment_has_karma(div)
 		return div.span(class: 'score').present?
 	end
 
-	def getComment(div)
+	def get_comment(div)
 		result = {}
-		result['author'] = getCommentAuthor(div)
-		result['link'] = getCommentLink(div)
-		result['content'] = getCommentContent(div)
-		result['vote'] = getCommentVote(div)
-		result['karma'] = getCommentKarma(div, result['vote']) if commentHasKarma(div)
+		result['author'] = get_comment_author(div)
+		result['link'] = get_comment_link(div)
+		result['content'] = get_comment_content(div)
+		result['vote'] = get_comment_vote(div)
+		result['karma'] = get_comment_karma(div, result['vote']) if comment_has_karma(div)
 		return result
 	end
 
-	def getCommentsDivs
+	def get_comments_divs
 		divs = @browser.div(class: 'commentarea').div(class: 'sitetable nestedlisting').children
 		result = []
 		divs.each do |div|
@@ -430,9 +429,9 @@ class Reddit
 		return result
 	end
 
-	def getRepliesDivs(mainDiv)
-		divs = mainDiv.div(class: 'child').div.children
-		begin
+	def get_replies_divs(main_div)
+		divs = main_div.div(class: 'child').div.children
+		begin #calling length if the length is 0 causes an exception
 			x = divs.length
 		rescue
 			return []
@@ -444,18 +443,18 @@ class Reddit
 		return result
 	end
 
-	def parseCommentsDivs(divs)
+	def parse_comments_divs(divs)
 		result = []
 		divs.each do |div|
-			result.push getComment(div)
-			if commentHasReplies(div)
-				result[result.length-1]['replies'] = parseCommentsDivs(getRepliesDivs(div))
+			result.push get_comment(div)
+			if comment_has_replies(div)
+				result[result.length-1]['replies'] = parse_comments_divs(get_replies_divs(div))
 			end
 		end
 		return result
 	end
 
-	def expandAllComments
+	def expand_all_comments
 		while true
 			begin
 				span = @browser.span(class: 'morecomments')
@@ -466,20 +465,20 @@ class Reddit
 		end
 	end
 
-	def getComments(post, expand = false)
+	def get_comments(post, expand = false)
 		@browser.goto post
-		expandAllComments if expand
-		return parseCommentsDivs(getCommentsDivs)
+		expand_all_comments if expand
+		return parse_comments_divs(get_comments_divs)
 	end
 
-	def replyComment(div, answer)
+	def reply_comments(div, answer)
 		div.li(text: 'reply').click
 		div.textarea(name: 'text').set answer
 		div.button(class: 'save').click
 	end
 
-	def voteComment(div, type)
-		return if isCommentVoted(div, type)
+	def vote_comment(div, type)
+		return if is_comment_voted(div, type)
 		div.div(class: 'midcol').div(class: type).click
 	end
 
@@ -487,7 +486,7 @@ class Reddit
 	#Subreddit handling
 	#---------------------------------------------------------------------------------
 
-	def getPostsDivs
+	def get_posts_divs
 		divs = @browser.div(id: 'siteTable').children
 		result = []
 		divs.each do |div|
@@ -496,75 +495,75 @@ class Reddit
 		return result
 	end
 
-	def getPostAuthor(div)
+	def get_post_author(div)
 		return div.attribute_value('data-author')
 	end
 
-	def getPostLink(div)
+	def get_post_link(div)
 		return div.attribute_value('data-permalink')
 	end
 
-	def getPostKarma(div)
+	def get_post_karma(div)
 		return div.attribute_value('data-score').to_i
 	end
 
-	def getPostTitle(div)
+	def get_post_title(div)
 		return div.link(class: 'title').text
 	end
 
-	def getPostNumberComments(div)
+	def get_post_number_of_comments(div)
 		return div.attribute_value('data-comments-count').to_i
 	end
 
 	def isPostVoted(div, type)
-		return isCommentVoted(div, type)
+		return is_comment_voted(div, type)
 	end
 
-	def getPostVote(div)
-		return getCommentVote(div)
+	def get_post_vote(div)
+		return get_comment_vote(div)
 	end
 
-	def votePost(div, type)
-		voteComment(div, type)
+	def vote_post(div, type)
+		vote_comment(div, type)
 	end
 
-	def getPost(div)
+	def get_post(div)
 		result = {}
-		result['author'] = getPostAuthor(div)
-		result['link'] = getPostLink(div)
-		result['karma'] = getPostKarma(div)
-		result['title'] = getPostTitle(div)
-		result['vote'] = getPostVote(div)
-		result['numberComments'] = getPostNumberComments(div)
+		result['author'] = get_post_author(div)
+		result['link'] = get_post_link(div)
+		result['karma'] = get_post_karma(div)
+		result['title'] = get_post_title(div)
+		result['vote'] = get_post_vote(div)
+		result['number_of_comments'] = get_post_number_of_comments(div)
 		return result
 	end
 
-	def subredditMovePage(direction)
-		return messageMovePage(direction)
+	def subreddit_move_page(direction)
+		return message_move_page(direction)
 	end
 
-	def openSubreddit(subreddit, subpage = 'hot')
+	def open_subreddit(subreddit, subpage = 'hot')
 		raise 'Unknown subreddit subpage: ' + subpage if !SUBREDDIT_SUBPAGES.include? subpage
 		@browser.goto PAGE_SUBREDDIT + subreddit + '/' + subpage
 	end
 
-	def getPosts(subreddit, subpage = 'hot', maxPages = 1)
+	def get_posts(subreddit, subpage = 'hot', max_pages = 1)
 		raise 'Unknown subreddit subpage: ' + subpage if !SUBREDDIT_SUBPAGES.include? subpage
 		@browser.goto PAGE_SUBREDDIT + subreddit + '/' + subpage
 		result = []
 		count = 0
 		while true
-			getPostsDivs.each do |div|
-				result.push getPost(div)
+			get_posts_divs.each do |div|
+				result.push get_post(div)
 			end
 			count += 1
-			break if count >= maxPages
-			break if !subredditMovePage('next')
+			break if count >= max_pages
+			break if !subreddit_move_page('next')
 		end
 		return result
 	end
 
-	def getModerators(subreddit) #an array of user names, not user structs itself
+	def get_moderators(subreddit) #an array of user names, not user structs itself
 		@browser.goto PAGE_SUBREDDIT + subreddit + '/about/moderators'
 		spans = @browser.div(class: 'moderator-table').spans(class: 'user')
 		result = []
@@ -574,44 +573,44 @@ class Reddit
 		return result
 	end
 
-	def getSubscribers
+	def get_subscribers
 		return @browser.span(class: 'subscribers').span(class: 'number').text.gsub(',', '').to_i
 	end
 
-	def getUsersOnline
+	def get_users_online
 		return @browser.p(class: 'users-online').span(class: 'number').text.gsub(',', '').to_i
 	end
 
-	def getSidebar
+	def get_side_bar
 		return @browser.div(class: 'usertext-body').text
 	end
 
-	def getSubreddit(subreddit)
+	def get_subreddit(subreddit)
 		result = {}
 		result['name'] = subreddit
 		@browser.goto PAGE_SUBREDDIT + subreddit
-		result['subscribers'] = getSubscribers
-		result['usersOnline'] = getUsersOnline
-		result['sidebar'] = getSidebar
-		result['moderators'] = getModerators(subreddit)
+		result['subscribers'] = get_subscribers
+		result['users_online'] = get_users_online
+		result['sidebar'] = get_side_bar
+		result['moderators'] = get_moderators(subreddit)
 		return result
 	end
 
-	def didCreateSub
+	def did_create_sub
 		return @browser.p(text: 'your subreddit has been created').present?
 	end
 
-	def waitSubCreation
+	def wait_sub_creation
 		count = 0.0
 		while true
-			return true if didCreateSub
+			return true if did_create_sub
 			sleep 0.25
 			count += 0.25
 			return false if count >= 10
 		end
 	end
 
-	def createSubreddit(subreddit)
+	def create_subreddit(subreddit)
 		@browser.goto CREATE_SUB_PAGE
 		@browser.text_field(id: 'name').set subreddit.name
 		@browser.text_field(id: 'title').set subreddit.title
@@ -621,26 +620,26 @@ class Reddit
 		@browser.radio(id: SUB_TYPES[subreddit.type]).set
 		@browser.radio(id: CONTENT_OPTIONS[subreddit.content]).set
 		@browser.button(text: 'create').click
-		return waitSubCreation
+		return wait_sub_creation
 	end
 
 	#---------------------------------------------------------------------------------
 	#User handling
 	#---------------------------------------------------------------------------------
 
-	def getUserPostKarma
+	def get_user_post_karma
 		return @browser.span(class: 'karma').text.gsub(',', '').to_i
 	end
 
-	def getUserCommentKarma
+	def get_user_comment_karma
 		return @browser.spans(class: 'karma')[1].text.gsub(',', '').to_i
 	end
 
-	def isModerator
+	def is_moderator
 		return @browser.ul(id: 'side-mod-list').present?
 	end
 
-	def getModerating
+	def get_moderating
 		result = []
 		@browser.ul(id: 'side-mod-list').lis.each do |li|
 			result.push li.link.title.split('/')[1]
@@ -648,34 +647,34 @@ class Reddit
 		return result
 	end
 
-	def isFriend
+	def is_friend
 		return @browser.span(class: 'fancy-toggle-button').link(text: '- friends').attribute_value('class').include?('active')
 	end
 
-	def addFriend
-		return if isFriend
+	def add_friend
+		return if is_friend
 		@browser.link(text: '+ friends').click
 	end
 
-	def removeFriend
-		return if !isFriend
+	def remove_friend
+		return if !is_friend
 		@browser.link(text: '- friends').click
 	end
 
-	def openUserPage(user)
+	def open_user_page(user)
 		@browser.goto PAGE_USER + user
-		skipOver18 if hasOver18
+		skip_over_18 if has_over_18
 	end
 
-	def getUser(user)
-		openUserPage(user)
+	def get_user(user)
+		open_user_page(user)
 		return nil if @browser.div(id: 'classy-error').present?
 		result = {}
 		result['name'] = user
-		result['postKarma'] = getUserPostKarma
-		result['commentKarma'] = getUserCommentKarma
-		result['isFriend'] = @username ? isFriend : false
-		result['moderating'] = getModerating if isModerator
+		result['postKarma'] = get_user_post_karma
+		result['commentKarma'] = get_user_comment_karma
+		result['is_friend'] = @username ? is_friend : false
+		result['moderating'] = get_moderating if is_moderator
 		return result
 	end
 
@@ -683,7 +682,7 @@ class Reddit
 	#User Activity handling
 	#---------------------------------------------------------------------------------
 
-	def getActivityDivs
+	def get_activity_divs
 		divs = @browser.div(id: 'siteTable').children
 		result = []
 		divs.each do |div|
@@ -692,30 +691,30 @@ class Reddit
 		return result
 	end
 
-	def getActivityType(div)
+	def get_activity_type(div)
 		return div.attribute_value('data-type')
 	end
 
-	def getActivityLink(div)
+	def get_activity_link(div)
 		return div.attribute_value('data-permalink')
 	end
 
-	def getActivitySubreddit(div)
+	def get_activity_subreddit(div)
 		return div.attribute_value('data-subreddit')
 	end
 
-	def getActivityTitle(div)
+	def get_activity_title(div)
 		return div.link(class: 'title').text
 	end
 
-	def getActivityContent(div) #only for comments
+	def get_activity_content(div) #only for comments
 		return div.div(class: 'usertext-body').text
 	end
 
-	def getActivityKarma(div, vote)
-		case getActivityType(div)
+	def get_activity_karma(div, vote)
+		case get_activity_type(div)
 		when 'comment' 
-			return getCommentKarma(div, vote)
+			return get_comment_karma(div, vote)
 		when 'link'
 			case vote
 			when 'up' 
@@ -731,45 +730,45 @@ class Reddit
 	end
 
 	def isActivityVoted(div, type)
-		return isCommentVoted(div, type)
+		return is_comment_voted(div, type)
 	end
 
-	def getActivityVote(div)
-		return getCommentVote(div)
+	def get_activity_vote(div)
+		return get_comment_vote(div)
 	end
 
-	def voteActivity(div, type)
-		voteMessage(div, type)
+	def vote_activity(div, type)
+		vote_message(div, type)
 	end
 
-	def getActivity(div)
+	def get_activity(div)
 		result = {}
-		result['type'] = getActivityType(div)
-		result['link'] = getActivityLink(div)
-		result['subreddit'] = getActivitySubreddit(div)
-		result['title'] = getActivityTitle(div)
-		result['content'] = result['type'] == 'link' ? result['title'] : getActivityContent(div)
-		result['vote'] = getActivityVote(div)
-		result['karma'] = getActivityKarma(div, result['vote'])
+		result['type'] = get_activity_type(div)
+		result['link'] = get_activity_link(div)
+		result['subreddit'] = get_activity_subreddit(div)
+		result['title'] = get_activity_title(div)
+		result['content'] = result['type'] == 'link' ? result['title'] : get_activity_content(div)
+		result['vote'] = get_activity_vote(div)
+		result['karma'] = get_activity_karma(div, result['vote'])
 		return result
 	end
 
-	def userMovePage(direction)
-		return messageMovePage(direction)
+	def user_move_page(direction)
+		return message_move_page(direction)
 	end
 
-	def getUserActivities(user, sortby = 'new', maxPages = 1)
+	def get_user_activities(user, sortby = 'new', max_pages = 1)
 		raise 'Unknown user sortby: ' + sortby if !USER_SORTBYS.include? sortby
 		@browser.goto PAGE_USER + user + '/?sort=' + sortby
 		result = []
 		count = 0
 		while true
-			getActivityDivs.each do |div|
-				result.push getActivity(div)
+			get_activity_divs.each do |div|
+				result.push get_activity(div)
 			end
 			count += 1
-			break if count >= maxPages
-			break if !userMovePage('next')
+			break if count >= max_pages
+			break if !user_move_page('next')
 		end
 		return result
 	end
@@ -778,8 +777,8 @@ class Reddit
 	#Extra functions
 	#---------------------------------------------------------------------------------
 
-	def getBannedSubreddits
-		msgs = getMessages('messages', true)
+	def get_banned_subreddits
+		msgs = get_messages('messages', true)
 		result = []
 		msgs.each do |msg|
 			result.push msg['author'] if msg['content'].include?('You have been permanently banned')
@@ -787,11 +786,11 @@ class Reddit
 		return result
 	end
 
-	def phasePickSubs
+	def phase_pick_subs
 		@browser.execute_script("var buttons = document.getElementsByClassName('c-btn c-btn-primary subreddit-picker__subreddit-button');\nfor (var i = 0; i < 8; i++) {\nbuttons[i].click();\n}")
 	end
 
-	def phaseEnterData(username, password, captchaToken)
+	def phase_enter_data(username, password, captchaToken)
 		result = {}
 		if username == nil
 			link = @browser.link(class: 'username-generator__item')
@@ -806,12 +805,10 @@ class Reddit
 		sleep 5
 		@browser.execute_script(%{document.getElementById("g-recaptcha-response").innerHTML="} + captchaToken + %{"})
 		sleep 5
-		# puts 'Press enter after captcha is solved.'
-		# gets
 		return result
 	end
 
-	def movePhase
+	def move_phase
 		@browser.buttons(text: 'Submit').each do |button|
 			if button.present?
 				button.click
@@ -828,11 +825,11 @@ class Reddit
 		end
 	end
 
-	def getPhase
+	def get_phase
 		return @browser.button(class: 'c-btn c-btn-primary subreddit-picker__subreddit-button').present? ? 'picksubs' : 'enterdata'
 	end
 
-	def createAccount(username, password, captchaToken) #if username is nil, selects username from reddit's suggestions
+	def create_account(username, password, captchaToken) #if username is nil, selects username from reddit's suggestions
 		@browser.goto PAGE_MAIN
 		@browser.div(id: 'header-bottom-right').link(text: 'sign up').click
 		sleep 3
@@ -840,28 +837,28 @@ class Reddit
 		sleep 5
 		result = nil
 		2.times do
-			case getPhase
+			case get_phase
 			when 'picksubs'
-				phasePickSubs
+				phase_pick_subs
 			when 'enterdata'
 				break if result != nil
-				result = phaseEnterData(username, password, captchaToken)
+				result = phase_enter_data(username, password, captchaToken)
 			end
-			movePhase
+			move_phase
 		end
-		waitLogin(result['username'])
+		wait_login(result['username'])
 		return result
 	end
 
-	def isUserBanned(user)
+	def is_user_banned(user)
 		@browser.goto PAGE_USER + user
-		skipOver18 if hasOver18
+		skip_over_18 if has_over_18
 		return @browser.div(id: 'classy-error').present? || @browser.h3(text: 'This account has been suspended').present?
 	end
 
-	def isSubBanned(subr)
+	def is_subreddit_banned(subr)
 		@browser.goto PAGE_SUBREDDIT + subr
-		skipOver18 if hasOver18
+		skip_over_18 if has_over_18
 		return @browser.h3(text: 'This community has been banned').present?
 	end
 end
