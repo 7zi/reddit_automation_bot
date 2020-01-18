@@ -289,7 +289,7 @@ class Reddit
 	end
 
 	def reply_post(post, answer)
-    case post.class
+    case post
     when Hash
       @browser.goto PAGE_MAIN_NO_SLASH + post['link']
     when String
