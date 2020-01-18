@@ -790,7 +790,7 @@ class Reddit
 		@browser.execute_script("var buttons = document.getElementsByClassName('c-btn c-btn-primary subreddit-picker__subreddit-button');\nfor (var i = 0; i < 8; i++) {\nbuttons[i].click();\n}")
 	end
 
-	def phase_enter_data(username, password, captchaToken)
+	def phase_enter_data(username, password, captcha_token)
 		result = {}
 		if username == nil
 			link = @browser.link(class: 'username-generator__item')
@@ -803,7 +803,7 @@ class Reddit
 		@browser.text_field(id: 'passwd_reg').set password
 		result['password'] = password
 		sleep 5
-		@browser.execute_script(%{document.getElementById("g-recaptcha-response").innerHTML="} + captchaToken + %{"})
+		@browser.execute_script(%{document.getElementById("g-recaptcha-response").innerHTML="} + captcha_token + %{"})
 		sleep 5
 		return result
 	end
@@ -829,7 +829,7 @@ class Reddit
 		return @browser.button(class: 'c-btn c-btn-primary subreddit-picker__subreddit-button').present? ? 'picksubs' : 'enterdata'
 	end
 
-	def create_account(username, password, captchaToken) #if username is nil, selects username from reddit's suggestions
+	def create_account(username, password, captcha_token) #if username is nil, selects username from reddit's suggestions
 		@browser.goto PAGE_MAIN
 		@browser.div(id: 'header-bottom-right').link(text: 'sign up').click
 		sleep 3
@@ -842,7 +842,7 @@ class Reddit
 				phase_pick_subs
 			when 'enterdata'
 				break if result != nil
-				result = phase_enter_data(username, password, captchaToken)
+				result = phase_enter_data(username, password, captcha_token)
 			end
 			move_phase
 		end
