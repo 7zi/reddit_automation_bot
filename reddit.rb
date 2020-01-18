@@ -4,67 +4,6 @@ require 'watir'
 #Website: https://icaroaugusto.com
 #Github: https://github.com/IcaroAugusto
 
-TRedditMessage = Struct.new(
-	:type, #'comment' or 'message'
-	:author, #who sent the message, if comment, the user else the subreddit
-	:post, #if a comment, the post that contains the comment, else nil
-	:subreddit, #if is a comment, the subreddit of the post, else the subreddit itself
-)
-
-TRedditComment = Struct.new(
-	:author, #who posted the comment
-	:link, #a direct link to the comment
-	:karma, #comment's karma
-	:content, #the comment's content
-	:vote, #did the account vote on the comment? upvote or downvote or nil
-	:replies #all the replies to the comment (array of comments)
-)
-
-TRedditPost = Struct.new(
-	:author,
-	:link,
-	:karma,
-	:title,
-	:vote,
-	:numberComments
-)
-
-TRedditUser = Struct.new(
-	:name,
-	:postKarma,
-	:commentKarma,
-	:moderating, #subreddits the user is a moderator of
-	:is_friend
-)
-
-TSubreddit = Struct.new(
-	:name,
-	:subscribers,
-	:users_online,
-	:sidebar,
-	:moderators
-)
-
-TNewSub = Struct.new(
-	:name,
-	:title,
-	:description,
-	:sidebar,
-	:subtext,
-	:type,
-	:content
-)
-
-TRedditUserActivity = Struct.new(
-	:type, #link or comment
-	:link, #link to the activity
-	:subreddit, #the subreddit in which the activity ocurred
-	:title,
-	:content,
-	:karma,
-	:vote
-)
-
 class Reddit
 	PAGE_MAIN = 'https://old.reddit.com/'
 	PAGE_MAIN_NO_SLASH = 'https://old.reddit.com'
