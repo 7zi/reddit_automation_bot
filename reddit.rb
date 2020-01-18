@@ -337,15 +337,6 @@ class Reddit
 		return form.present? && form.parent.parent.attribute_value('data-author') == @username
 	end
 
-	# def waitReply(answer)
-	# 	t = Timer.new(5000)
-	# 	t.start
-	# 	while true
-	# 		return true if hasReply(answer)
-	# 		return false if t.finished
-	# 	end
-	# end
-
 	def hasReplyError
 		return @browser.span(class: 'error', style: '').present?
 	end
