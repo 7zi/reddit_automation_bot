@@ -1,5 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'reddit_auto'
+  s.homepage = 'https://github.com/IcaroAugusto/reddit_automation_bot'
   s.authors = ['Ícaro Augusto']
   s.version = "1.0.0"
   s.date = '2020-01-18'
