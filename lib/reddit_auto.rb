@@ -4,6 +4,16 @@ require 'watir'
 #Website: https://icaroaugusto.com
 #Github: https://github.com/IcaroAugusto
 
+NewSub = Struct.new(
+  :name,
+  :title,
+  :description,
+  :sidebar,
+  :subtext,
+  :type,
+  :content
+)
+
 class Reddit
 	PAGE_MAIN = 'https://old.reddit.com/'
 	PAGE_MAIN_NO_SLASH = 'https://old.reddit.com'
@@ -15,16 +25,6 @@ class Reddit
 	MESSAGE_SUBPAGES = ['inbox', 'unread', 'messages', 'comments', 'sent']
 	SUBREDDIT_SUBPAGES = ['hot', 'new', 'rising', 'top', 'gilded']
 	USER_SORTBYS = ['new', 'hot', 'top', 'controversial']
-
-  NewSub = Struct.new(
-    :name,
-    :title,
-    :description,
-    :sidebar,
-    :subtext,
-    :type,
-    :content
-  )
 
   SUB_TYPES = {
     'public' => 'type_public',
@@ -133,7 +133,7 @@ class Reddit
 
   # Gets the type of a message
   #
-  # @param [Watir::Div] the div containing the message
+  # @param div [Watir::Div] the div containing the message
   # @return [String] the message type
 	def get_message_type(div)
 		return div.attribute_value('data-type')
@@ -141,7 +141,7 @@ class Reddit
 
   # Gets the post that a message belongs to
   #
-  # @param [Watir::Div] the div containing the message
+  # @param div [Watir::Div] the div containing the message
   # @return [String] a link to the post
 	def get_message_post(div)
 		return div.p(class: 'subject').link(class: 'title').href
@@ -149,7 +149,7 @@ class Reddit
 
   # Gets the reddit user who posted the message
   #
-  # @param [Watir::Div] the div containing the message
+  # @param div [Watir::Div] the div containing the message
   # @return [String] the username of the message's author
 	def get_message_author(div)
 		return div.attribute_value('data-author')
@@ -157,7 +157,7 @@ class Reddit
 
   # Gets the subreddit which the message was posted in
   #
-  # @param [Watir::Div] the div containing the message
+  # @param div [Watir::Div] the div containing the message
   # @return [String] the subreddit
 	def get_message_subreddit(div)
 		return div.attribute_value('data-subreddit')
@@ -165,7 +165,7 @@ class Reddit
 
   # Gets the content of the message
   #
-  # @param [Watir::Div] the div containing the message
+  # @param div [Watir::Div] the div containing the message
   # @return [String] the message's content
 	def get_message_content(div)
 		return div.div(class: 'md').text
@@ -185,8 +185,8 @@ class Reddit
 
   # Checks if a given message is voted by the logged in user
   #
-  # @param [Watir::Div] the div containing the message
-  # @param [String] the type of vote, can be 'up' or 'down'
+  # @param div [Watir::Div] the div containing the message
+  # @param type [String] the type of vote, can be 'up' or 'down'
   # @return [Boolean] whether the message is voted in the given type
 	def is_message_voted(div, type)
 		return div.div(class: 'midcol').div(class: type + 'mod').present?
@@ -194,7 +194,7 @@ class Reddit
 
   # Gets the type of vote the given message received from the logged in user
   #
-  # @param [Watir::Div] the div containing the message
+  # @param div [Watir::Div] the div containing the message
   # @return [String, nil] returns 'up' or 'down' if voted or nil if not voted
 	def get_message_vote(div)
 		return 'up' if is_message_voted(div, 'up')
@@ -204,8 +204,8 @@ class Reddit
 
   # Votes the given message
   #
-  # @param [Watir::Div] the div containing the message
-  # @param [String] the type of vote, can be 'up' or 'down'
+  # @param div [Watir::Div] the div containing the message
+  # @param type [String] the type of vote, can be 'up' or 'down'
 	def vote_message(div, type)
 		return if is_message_voted(div, type)
 		div.div(class: 'midcol').div(class: type).click
@@ -213,8 +213,8 @@ class Reddit
 
   # Replies the given message
   #
-  # @param [Watir::Div] the div containing the message
-  # @param [String] answer, the content of the reply
+  # @param div [Watir::Div] the div containing the message
+  # @param answer [String] answer, the content of the reply
 	def reply_message(div, answer)
 		div.li(text: 'reply').click
 		div.textarea.set answer
@@ -223,7 +223,7 @@ class Reddit
 
   # Gets a hash object containing information about a given message
   #
-  # @param [Watir::Div] the div containing the message
+  # @param div [Watir::Div] the div containing the message
   # @return [Hash] a hash containing informaton about the given message
 	def get_message(div) #returns a hash with message data
 		result = {}
@@ -238,7 +238,7 @@ class Reddit
 
   # Moves to the next or previous page in the message inbox
   #
-  # @param [String] the direction to move, can be 'next' or 'prev'
+  # @param direction [String] the direction to move, can be 'next' or 'prev'
   # @return [Boolean] returns true if moved to the desired page or false if didn't because you're already in the last (move next) or first (move prev) page
 	def message_move_page(direction)
 		button = @browser.span(class: direction + '-button')
@@ -249,7 +249,7 @@ class Reddit
 
   # Opens the messages subpage, raises an exception if an unknown subpage is given
   #
-  # @param [String] the subpage to open, can be: 'inbox', 'unread', 'messages', 'comments' or 'sent'
+  # @param subpage [String] the subpage to open, can be: 'inbox', 'unread', 'messages', 'comments' or 'sent'
 	def open_messages_subpage(subpage)
 		raise 'Unknown message subpage: ' + subpage if !MESSAGE_SUBPAGES.include? subpage
 		@browser.goto PAGE_MESSAGES + subpage
@@ -257,8 +257,8 @@ class Reddit
 
   # Gets all the messages in a given subpage, raises an exception if an unknown subpage is given
   #
-  # @param [String] the subpage to open, can be: 'inbox', 'unread', 'messages', 'comments' or 'sent'
-  # @param [Boolean] if true will check all pages, if false will check only the first page
+  # @param subpage [String] the subpage to open, can be: 'inbox', 'unread', 'messages', 'comments' or 'sent'
+  # @param all_pages [Boolean] if true will check all pages, if false will check only the first page
   # @return [Array] an array containing hashes with information about all pages 
 	def get_messages(subpage, all_pages = false)
 		open_messages_subpage(subpage)
@@ -301,9 +301,9 @@ class Reddit
 
   # Submits a link to the given subreddit, raises an exception on failure
   #
-  # @param [String] the name of the subreddit to submit the link to
-  # @param [String] the url to submit
-  # @param [String] the title of the post
+  # @param subreddit [String] the name of the subreddit to submit the link to
+  # @param url [String] the url to submit
+  # @param title [String] the title of the post
 	def submit_link(subreddit, url, title)
 		@browser.goto PAGE_SUBREDDIT + subreddit + '/submit'
 		skip_over_18 if has_over_18
@@ -322,7 +322,7 @@ class Reddit
 
   # Sets the given flair to the post, does nothing if the subreddit has no flair option
   #
-  # @param [String] the desired flair
+  # @param flair [String] the desired flair
 	def set_flair(flair)
 		return if !sub_has_flair
 		@browser.div('aria-label': 'Add flair').click
@@ -336,10 +336,10 @@ class Reddit
 
   # Submits a link to the given subreddit using the new interface, raises an exception on failure
   #
-  # @param [String] the name of the subreddit to submit the link to
-  # @param [String] the url to submit
-  # @param [String] the title of the post
-  # @param [String, nil] the flair to add, if nil will add no flair to the post
+  # @param subreddit [String] the name of the subreddit to submit the link to
+  # @param url [String] the url to submit
+  # @param title [String] the title of the post
+  # @param flair [String, nil] the flair to add, if nil will add no flair to the post
 	def submit_link_new(subreddit, url, title, flair = nil) #uses new reddit
 		@browser.goto 'https://www.reddit.com/r/' + subreddit + '/submit'
 		skip_over_18_new if has_over_18_new
@@ -354,9 +354,9 @@ class Reddit
 
   # Submits a text post to the given subreddit, raises an exception on failure
   #
-  # @param [String] the name of the subreddit to submit the link to
-  # @param [String] the title of the post
-  # @param [String] the text content of the post
+  # @param subreddit [String] the name of the subreddit to submit the link to
+  # @param title [String] the title of the post
+  # @param text [String] the text content of the post
 	def submit_text(subreddit, title, text)
 		@browser.goto PAGE_SUBREDDIT + subreddit + '/submit?selftext=true'
 		skip_over_18 if has_over_18
@@ -372,7 +372,7 @@ class Reddit
 
   # Checks if the currently open post is voted by the logged in account, raises an exception if an unknown vote type is submitted
   #
-  # @param [String] the vote type, can be 'up' or 'down'
+  # @param type [String] the vote type, can be 'up' or 'down'
   # @return [Boolean] whether or not the original post is voted in the given type
 	def is_original_post_voted(type)
 		div = @browser.div(id: 'siteTable').div(class: 'midcol')
@@ -397,7 +397,7 @@ class Reddit
 
   # Votes the currently open original post, does nothing if already voted, raises an exception if an unknown vote type is submitted
   #
-  # @param [String] vote type: 'up' or 'down'
+  # @param type [String] vote type: 'up' or 'down'
 	def vote_original_post(type)
 		return if is_original_post_voted(type)
 		div = @browser.div(id: 'siteTable').div(class: 'midcol')
@@ -406,7 +406,7 @@ class Reddit
 
   # Forms the full post url given the post's link
   #
-  # @param [String] the post's link
+  # @param link [String] the post's link
   # @return [String] the full post url
 	def form_post_url(link)
 		return PAGE_MAIN_NO_SLASH + link
@@ -414,7 +414,7 @@ class Reddit
 
   # Opens the given post
   #
-  # @param [Hash, String] accepts either a post hash or the post's full url
+  # @param post [Hash, String] accepts either a post hash or the post's full url
 	def open_post(post)
     case post
     when Hash
@@ -429,7 +429,7 @@ class Reddit
 
   # Checks if the logged in account has already replied to the given post with the given answer
   #
-  # @param [String] the answer to look for
+  # @param answer [String] the answer to look for
   # @return [Boolean] whether or not the logged in account replied to the post with the given answer
 	def has_reply(answer)
 		form = @browser.form(text: answer)
@@ -452,7 +452,7 @@ class Reddit
 
   # Sleeps the given time then checks if there was an error when replying
   #
-  # @param [Integer] the number of seconds to sleep
+  # @param time [Integer] the number of seconds to sleep
   # @return [Boolean] whether there was an error or not
 	def wait_reply(time = 2)
 		sleep time
@@ -461,8 +461,8 @@ class Reddit
 
   # Replies the given post
   #
-  # @param [Hash, String] the post to reply, can be a post hash or full url
-  # @param [String] the answer to the post
+  # @param post [Hash, String] the post to reply, can be a post hash or full url
+  # @param answer [String] the answer to the post
   # @return [Boolean] if replying as successful
 	def reply_post(post, answer)
     open_post(post)
@@ -473,7 +473,7 @@ class Reddit
 
   # Gets the number of replies the given comment received
   #
-  # @param [Watir::Div] a div containing the comment
+  # @param div [Watir::Div] a div containing the comment
   # @return [Integer] the number of replies
 	def get_comment_replies_count(div)
 		return div.attribute_value('data-replies').to_i
@@ -481,7 +481,7 @@ class Reddit
 
   # Checks if a given comment has replies
   #
-  # @param [Watir::Div] a div containing the comment
+  # @param div [Watir::Div] a div containing the comment
   # @return [Boolean] if the comment has replies or not
 	def comment_has_replies(div)
 		return div.attribute_value('data-replies') != '0'
@@ -489,7 +489,7 @@ class Reddit
 
   # Gets the author of the comment
   #
-  # @param [Watir::Div] a div containing the comment
+  # @param div [Watir::Div] a div containing the comment
   # @return [String] the author's username
 	def get_comment_author(div)
 		return div.attribute_value('data-author')
@@ -497,7 +497,7 @@ class Reddit
 
   # Gets the link of the comment
   #
-  # @param [Watir::Div] a div containing the comment
+  # @param div [Watir::Div] a div containing the comment
   # @return [String] the link of the comment
 	def get_comment_link(div)
 		return div.attribute_value('data-permalink')
@@ -505,7 +505,7 @@ class Reddit
 
   # Gets content of the comment
   #
-  # @param [Watir::Div] a div containing the comment
+  # @param div [Watir::Div] a div containing the comment
   # @return [String] the content of the comment
 	def get_comment_content(div)
 		return div.div(class: 'usertext-body').text
@@ -513,8 +513,8 @@ class Reddit
 
   # Gets the amount of karma the comment received, 'up', 'down' or overall
   #
-  # @param [Watir::Div] a div containing the comment
-  # @param [String, nil] 'up' for number of upvotes, 'down' for downvotes, nil for total
+  # @param div [Watir::Div] a div containing the comment
+  # @param vote [String, nil] 'up' for number of upvotes, 'down' for downvotes, nil for total
   # @return [Integer] the number of votes/karma
 	def get_comment_karma(div, vote)
 		case vote
@@ -530,8 +530,8 @@ class Reddit
 
   # Checks if the comment is voted by the logged in account, 'up' or 'down', raises an exception if an unknown vote type is submitted
   #
-  # @param [Watir::Div] a div containing the comment
-  # @param [String] the vote type, 'up' or 'down'
+  # @param div [Watir::Div] a div containing the comment
+  # @param type [String] the vote type, 'up' or 'down'
   # @return [Boolean] if the comment is voted
 	def is_comment_voted(div, type)
 		case type
@@ -547,7 +547,7 @@ class Reddit
 
   # Gets the comment's vote by the logged in account
   #
-  # @param [Watir::Div] a div containing the comment
+  # @param div [Watir::Div] a div containing the comment
   # @return [String, nil] 'up' if upvoted, 'down' if downvoted, nil if not voted
 	def get_comment_vote(div)
 		return 'up' if is_comment_voted(div, 'up')
@@ -557,7 +557,7 @@ class Reddit
 
   # Checks if the given comment has karma
   #
-  # @param [Watir::Div] a div containing the comment
+  # @param div [Watir::Div] a div containing the comment
   # @return [Boolean] whether the comment has karma or not
 	def comment_has_karma(div)
 		return div.span(class: 'score').present?
@@ -565,7 +565,7 @@ class Reddit
 
   # Gets a hash containing information about a given comment
   #
-  # @param [Watir::Div] a div containing the comment
+  # @param div [Watir::Div] a div containing the comment
   # @return [Hash] a hash containing information about a given comment
 	def get_comment(div)
 		result = {}
@@ -591,7 +591,7 @@ class Reddit
 
   # Gets all replies' divs to the given comment
   #
-  # @param [Watir::Div] a div containing the comment
+  # @param div [Watir::Div] a div containing the comment
   # @return [Array] an array containing all replies' divs to the given comment
 	def get_replies_divs(main_div)
 		divs = main_div.div(class: 'child').div.children
@@ -609,7 +609,7 @@ class Reddit
 
   # Parses all the comments divs and replies
   #
-  # @param [Watir::Div] a div containing the comment
+  # @param div [Watir::Div] a div containing the comment
   # @return [Array] an array of hashes containing the comments and their replies
 	def parse_comments_divs(divs)
 		result = []
@@ -636,8 +636,8 @@ class Reddit
 
   # Gets all the comments in the given post
   #
-  # @param [String, Hash] a post hash or full url
-  # @param [Boolean] whether to expand all the comments first
+  # @param post [String, Hash] a post hash or full url
+  # @param expand [Boolean] whether to expand all the comments first
   # @return [Array] an array of hashes including information about all the comments and their replies
 	def get_comments(post, expand = false)
 		open_post(post)
@@ -647,8 +647,8 @@ class Reddit
 
   # Replies the given comment with the given anwer
   #
-  # @param [Watir::Div] a div containing the comment
-  # @param [String] the answer
+  # @param div [Watir::Div] a div containing the comment
+  # @param answer [String] the answer
 	def reply_comment(div, answer)
 		div.li(text: 'reply').click
 		div.textarea(name: 'text').set answer
@@ -657,8 +657,8 @@ class Reddit
 
   # Votes the given comment
   #
-  # @param [Watir::Div] a div containing the comment
-  # @param [String] the vote type can be 'up' or 'down'
+  # @param div [Watir::Div] a div containing the comment
+  # @param type [String] the vote type can be 'up' or 'down'
 	def vote_comment(div, type)
 		return if is_comment_voted(div, type)
 		div.div(class: 'midcol').div(class: type).click
@@ -682,7 +682,7 @@ class Reddit
 
   # Gets the author of the post
   #
-  # @param [Watir::Div] a div containing the post
+  # @param div [Watir::Div] a div containing the post
   # @return [String] the author of the post
 	def get_post_author(div)
 		return div.attribute_value('data-author')
@@ -690,7 +690,7 @@ class Reddit
 
   # Gets the link of the post
   #
-  # @param [Watir::Div] a div containing the post
+  # @param div [Watir::Div] a div containing the post
   # @return [String] the link of the post
 	def get_post_link(div)
 		return div.attribute_value('data-permalink')
@@ -698,7 +698,7 @@ class Reddit
 
   # Gets the amount of karma of the post
   #
-  # @param [Watir::Div] a div containing the post
+  # @param div [Watir::Div] a div containing the post
   # @return [Integer] the amount of karma the post received
 	def get_post_karma(div)
 		return div.attribute_value('data-score').to_i
@@ -706,7 +706,7 @@ class Reddit
 
   # Gets the title of the post
   #
-  # @param [Watir::Div] a div containing the post
+  # @param div [Watir::Div] a div containing the post
   # @return [String] the title of the post
 	def get_post_title(div)
 		return div.link(class: 'title').text
@@ -714,7 +714,7 @@ class Reddit
 
   # Gets the number of comments in the post
   #
-  # @param [Watir::Div] a div containing the post
+  # @param div [Watir::Div] a div containing the post
   # @return [Integer] the number of comments in the post
 	def get_post_number_of_comments(div)
 		return div.attribute_value('data-comments-count').to_i
@@ -722,8 +722,8 @@ class Reddit
 
   # Checks if the post is voted in the given type
   #
-  # @param [Watir::Div] a div containing the post
-  # @param [String] the type of vote: 'up' or 'down'
+  # @param div [Watir::Div] a div containing the post
+  # @param type [String] the type of vote: 'up' or 'down'
   # @return [Boolean] whether the post is voted or not in the given type
 	def is_post_voted(div, type)
 		return is_comment_voted(div, type)
@@ -731,7 +731,7 @@ class Reddit
 
   # Gets the type of vote the post has
   #
-  # @param [Watir::Div] a div containing the post
+  # @param div [Watir::Div] a div containing the post
   # @return [String, nil] the of vote, 'up', 'down' or nil if not voted
 	def get_post_vote(div)
 		return get_comment_vote(div)
@@ -739,15 +739,15 @@ class Reddit
 
   # Votes the given post, 'up' or 'down', raises exception if unknown vote type is sumited
   #
-  # @param [Watir::Div] a div containing the post
-  # @param [String] the type of vote: 'up' or 'down'
+  # @param div [Watir::Div] a div containing the post
+  # @param type [String] the type of vote: 'up' or 'down'
 	def vote_post(div, type)
 		vote_comment(div, type)
 	end
 
   # Gets a hash containing information about a given post
   #
-  # @param [Watir::Div] a div containing the post
+  # @param div [Watir::Div] a div containing the post
   # @return [Hash] a hash containing information about a given post
 	def get_post(div)
 		result = {}
@@ -762,7 +762,7 @@ class Reddit
 
   # Moves to the next or previous page in the subreddit
   #
-  # @param [String] the direction to move, can be 'next' or 'prev'
+  # @param direction [String] the direction to move, can be 'next' or 'prev'
   # @return [Boolean] returns true if moved to the desired page or false if didn't because you're already in the last (move next) or first (move prev) page
 	def subreddit_move_page(direction)
 		return message_move_page(direction)
@@ -770,8 +770,8 @@ class Reddit
 
   # Forms the full subreddit url given the subreddit's name
   #
-  # @param [String] the subreddit's name
-  # @param [String] the subreddit's subpage, defaults to 'hot'
+  # @param name [String] the subreddit's name
+  # @param subpage [String] the subreddit's subpage, defaults to 'hot'
   # @return [String] the full subreddit url
   def form_subreddit_url(name, subpage = 'hot')
     return PAGE_SUBREDDIT + name + '/' + subpage
@@ -779,8 +779,8 @@ class Reddit
 
   # Opens the given subreddit in the given subpage, raises an exception if an unknown subpage is given, known subpages: 'hot', 'new', 'rising', 'top', 'gilded'
   #
-  # @param [String, Hash] a subreddit's name or hash
-  # @param [String] the subreddit's subpage, defaults to 'hot'
+  # @param subreddit [String, Hash] a subreddit's name or hash
+  # @param subpage [String] the subreddit's subpage, defaults to 'hot'
 	def open_subreddit(subreddit, subpage = 'hot')
 		raise 'Unknown subreddit subpage: ' + subpage if !SUBREDDIT_SUBPAGES.include? subpage
     case subreddit
@@ -800,9 +800,9 @@ class Reddit
 
   # Gets all the posts in the given subreddit
   #
-  # @param [String, Hash] a subreddit's name or hash
-  # @param [String] the subreddit's subpage, defaults to 'hot'
-  # @param [Integer] maximum amount of pages to gather posts from
+  # @param subreddit [String, Hash] a subreddit's name or hash
+  # @param subpage [String] the subreddit's subpage, defaults to 'hot'
+  # @param max_pages [Integer] maximum amount of pages to gather posts from
   # @return [Array] an array containing hashes with information about the subreddit's posts
 	def get_posts(subreddit, subpage = 'hot', max_pages = 1)
 		open_subreddit(subreddit, subpage)
@@ -821,7 +821,7 @@ class Reddit
 
   # Forms the full url for the subreddit's moderator's page
   #
-  # @param [String, Hash] a subreddit's name or hash
+  # @param subreddit [String, Hash] a subreddit's name or hash
   # @return [String] the full url for the subreddit's moderator's page
   def form_subreddit_mod_url(subreddit)
     case subreddit
@@ -834,8 +834,8 @@ class Reddit
 
   # Gets an array including the usernames of the moderators of the given subreddit
   #
-  # @param [String, Hash] a subreddit's name or hash
-  # @reutrn [Array] an array including the usernames of the moderators of the given subreddit
+  # @param subreddit [String, Hash] a subreddit's name or hash
+  # @return [Array] an array including the usernames of the moderators of the given subreddit
 	def get_moderators(subreddit)
 		@browser.goto form_subreddit_mod_url(subreddit)
 		spans = @browser.div(class: 'moderator-table').spans(class: 'user')
@@ -869,7 +869,7 @@ class Reddit
 
   # Gets a hash with information about the given subreddit
   #
-  # @param [String] the subreddit's name
+  # @param subreddit [String] the subreddit's name
   # @return [Hash] a hash with information about the given subreddit
 	def get_subreddit(subreddit)
 		result = {}
@@ -904,7 +904,7 @@ class Reddit
 
   # Creates a subreddit with the given parameters
   #
-  # @param [NewSub] A Struct containing the subreddit's parameters 
+  # @param subreddit [NewSub] A Struct containing the subreddit's parameters 
   # @return [Boolean] whether the subreddit was successfully created 
 	def create_subreddit(subreddit)
 		@browser.goto CREATE_SUB_PAGE
@@ -976,15 +976,15 @@ class Reddit
 
   # Opens the page of the given username
   #
-  # @param [String] the username
+  # @param user [String] the username
 	def open_user_page(user)
 		@browser.goto PAGE_USER + user
 		skip_over_18 if has_over_18
 	end
 
   # Gets a hash containing information about the given user
-  # @param [String] the username
   #
+  # @param user [String] the username
   # @return [Hash] a hash containing information about the given user
 	def get_user(user)
 		open_user_page(user)
@@ -1016,7 +1016,7 @@ class Reddit
 
   # Gets the type of the activity
   #
-  # @param [Watir::Div] the activity's div
+  # @param div [Watir::Div] the activity's div
   # @return [String] the activity's type
 	def get_activity_type(div)
 		return div.attribute_value('data-type')
@@ -1024,7 +1024,7 @@ class Reddit
 
   # Gets the link of the activity
   #
-  # @param [Watir::Div] the activity's div
+  # @param div [Watir::Div] the activity's div
   # @return [String] the activity's link
 	def get_activity_link(div)
 		return div.attribute_value('data-permalink')
@@ -1032,7 +1032,7 @@ class Reddit
 
   # Gets the subreddit of the activity
   #
-  # @param [Watir::Div] the activity's div
+  # @param div [Watir::Div] the activity's div
   # @return [String] the activity's subreddit
 	def get_activity_subreddit(div)
 		return div.attribute_value('data-subreddit')
@@ -1040,7 +1040,7 @@ class Reddit
 
   # Gets the title of the activity
   #
-  # @param [Watir::Div] the activity's div
+  # @param div [Watir::Div] the activity's div
   # @return [String] the activity's title
 	def get_activity_title(div)
 		return div.link(class: 'title').text
@@ -1048,7 +1048,7 @@ class Reddit
 
   # Gets the activity's content if it is a comment
   #
-  # @param [Watir::Div] the activity's div
+  # @param div [Watir::Div] the activity's div
   # @return [String] the activity's text content
 	def get_activity_content(div) #only for comments
 		return div.div(class: 'usertext-body').text
@@ -1056,8 +1056,8 @@ class Reddit
 
   # Gets the amount of karma the activity received, 'up', 'down' or overall
   #
-  # @param [Watir::Div] a div containing the activity
-  # @param [String, nil] 'up' for number of upvotes, 'down' for downvotes, nil for total
+  # @param div [Watir::Div] a div containing the activity
+  # @param vote [String, nil] 'up' for number of upvotes, 'down' for downvotes, nil for total
   # @return [Integer] the number of votes/karma
 	def get_activity_karma(div, vote)
 		case get_activity_type(div)
@@ -1079,8 +1079,8 @@ class Reddit
 
   # Checks if the activity is voted by the logged in account, 'up' or 'down', raises an exception if an unknown vote type is submitted
   #
-  # @param [Watir::Div] a div containing the activity
-  # @param [String] the vote type, 'up' or 'down'
+  # @param div [Watir::Div] a div containing the activity
+  # @param type [String] the vote type, 'up' or 'down'
   # @return [Boolean] if the activity is voted
 	def is_activity_voted(div, type)
 		return is_comment_voted(div, type)
@@ -1088,7 +1088,7 @@ class Reddit
 
   # Gets the activity's vote by the logged in account
   #
-  # @param [Watir::Div] a div containing the activity
+  # @param div [Watir::Div] a div containing the activity
   # @return [String, nil] 'up' if upvoted, 'down' if downvoted, nil if not voted
 	def get_activity_vote(div)
 		return get_comment_vote(div)
@@ -1096,7 +1096,7 @@ class Reddit
 
   # Votes the given activity
   #
-  # @param [Watir::Div] a div containing the activity
+  # @param div [Watir::Div] a div containing the activity
   # @param [String] the vote type can be 'up' or 'down'
 	def vote_activity(div, type)
 		vote_message(div, type)
@@ -1104,7 +1104,7 @@ class Reddit
 
   # Gets a hash containing information about the given activity
   #
-  # @param [Watir::Div] a div containing the activity
+  # @param div [Watir::Div] a div containing the activity
   # @return a hash containing information about the given activity
 	def get_activity(div)
 		result = {}
@@ -1120,7 +1120,7 @@ class Reddit
 
   # Moves to the next or previous page in the user's activity box
   #
-  # @param [String] the direction to move, can be 'next' or 'prev'
+  # @param direction [String] the direction to move, can be 'next' or 'prev'
   # @return [Boolean] returns true if moved to the desired page or false if didn't because you're already in the last (move next) or first (move prev) page
 	def user_move_page(direction)
 		return message_move_page(direction)
@@ -1128,9 +1128,9 @@ class Reddit
 
   # Gets all the user activities from the given user, raises exception if unknown sorting method is used
   #
-  # @param [String] the username
-  # @param [String] sorting method, can be: 'new', 'hot', 'top', 'controversial'
-  # @param [Integer] maximum amounts of pages to get activies from
+  # @param user [String] the username
+  # @param sortby [String] sorting method, can be: 'new', 'hot', 'top', 'controversial'
+  # @param max_pages [Integer] maximum amounts of pages to get activies from
   # @return [Array] an array containing all the activities hashes
 	def get_user_activities(user, sortby = 'new', max_pages = 1)
 		raise 'Unknown user sortby: ' + sortby if !USER_SORTBYS.include? sortby
@@ -1209,9 +1209,9 @@ class Reddit
 
   # Creates an account on reddit
   #
-  # @param [String] the account's username
-  # @param [String] the account's password
-  # @param [String] the google's captcha's token, it's up to you how to get it
+  # @param username [String] the account's username
+  # @param password [String] the account's password
+  # @param captcha_token [String] the google's captcha's token, it's up to you how to get it
   # @return [Hash] a hash containing the account's username and password
 	def create_account(username, password, captcha_token) #if username is nil, selects username from reddit's suggestions
 		@browser.goto PAGE_MAIN
@@ -1236,7 +1236,7 @@ class Reddit
 
   # Checks if the given user is banned
   #
-  # @param [String] the username
+  # @param user [String] the username
   # @return [Boolean] whether the user is banned or not
 	def is_user_banned(user)
 		@browser.goto PAGE_USER + user
@@ -1246,10 +1246,10 @@ class Reddit
 
   # Checks if the given subreddit is banned
   #
-  # @param [String] the subreddit's name
+  # @param subreddit [String] the subreddit's name
   # @return [Boolean] whether the subreddit is banned or not
-	def is_subreddit_banned(subr)
-		@browser.goto PAGE_SUBREDDIT + subr
+	def is_subreddit_banned(subreddit)
+		@browser.goto PAGE_SUBREDDIT + subreddit
 		skip_over_18 if has_over_18
 		return @browser.h3(text: 'This community has been banned').present?
 	end
