@@ -2,7 +2,7 @@ Gem::Specification.new do |s|
   s.name = 'reddit_auto'
   s.homepage = 'https://github.com/IcaroAugusto/reddit_automation_bot'
   s.authors = ['Ícaro Augusto']
-  s.version = "1.0.0"
+  s.version = "1.1.0"
   s.date = '2020-01-18'
   s.required_ruby_version = '>= 2.3.0'
   s.summary = 'A reddit automation gem that uses watir/selenium'

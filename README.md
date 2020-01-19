@@ -41,3 +41,13 @@ See some examples in the Examples folder.
 Ícaro Augusto
 
 [https://icaroaugusto.com](https://icaroaugusto.com)
+
+### Changelogs
+
+#### 1.1
+
+Added documentation.
+
+#### 1.0
+
+Created.
